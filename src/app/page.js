@@ -8,8 +8,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchDust = async (code, guName) => {
-      const apiKey = process.env.NEXT_PUBLIC_SEOUL_FINE_DUST_API_KEY
-      const url = `http://openAPI.seoul.go.kr:8088/${apiKey}/xml/ListAirQualityByDistrictService/1/5/${code}/`
+      const url = `/api/finedust?code=${code}`
 
       console.log(`📡 [${guName}] 요청 주소:`, url)
 
@@ -38,17 +37,9 @@ export default function Home() {
     }
 
     const fetchPollen = async () => {
-      const apiKey = process.env.NEXT_PUBLIC_SEOUL_POLLEN_API_KEY
-      const time = new Date().toISOString().slice(0, 13).replace(/[-T]/g, '')
-      const areaNo = '1100000000'
-
-      const url = `https://apis.data.go.kr/1360000/HealthWthrIdxServiceV3/getPinePollenRiskIdxV3?serviceKey=${apiKey}&pageNo=1&numOfRows=10&dataType=XML&areaNo=${areaNo}&time=${time}`
-
-      console.log('📅 오늘 날짜:', time)
-      console.log('📡 꽃가루 요청 주소:', url)
 
       try {
-        const res = await fetch(url)
+        const res = await fetch('/api/pollen')
         const text = await res.text()
 
         console.log('📦 꽃가루 응답:', text)
