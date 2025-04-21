@@ -89,7 +89,7 @@ export default function Home() {
             지수: {dustData.seodaemun.maxIndex} / 등급: {dustData.seodaemun.grade}
           </p>
         ) : (
-          <p className={styles.desc}>불러오는 중...</p>
+          <p className={styles.load}>불러오는 중...</p>
         )}
       </div>
 
@@ -102,7 +102,7 @@ export default function Home() {
             지수: {dustData.dobong.maxIndex} / 등급: {dustData.dobong.grade}
           </p>
         ) : (
-          <p className={styles.desc}>불러오는 중...</p>
+          <p className={styles.load}>불러오는 중...</p>
         )}
       </div>
 
@@ -115,7 +115,8 @@ export default function Home() {
           🌼 꽃가루 지수: {pollenData.index}
         </p>
       ) : (
-        <p className={styles.desc}>🌿 꽃가루 데이터 없음</p>
+
+        <p  className={styles.load}>불러오는 중...</p>
       )}
       </div>
     </div>

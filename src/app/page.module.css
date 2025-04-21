@@ -23,6 +23,15 @@
   text-align: center;
 }
 
+.load{
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px;
+  border-radius: 8px;
+  color: black;
+  text-align: center;
+}
+
 /* 등급별 배경색 설정 */
 .좋음 {
   background-color: #4a90e2; /* 파란색 */
