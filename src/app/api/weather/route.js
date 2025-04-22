@@ -7,7 +7,8 @@ export async function GET(req) {
     const apiUrl = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
 
     const now = new Date()
-    const yyyy = now.getFullYear()
+    const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+    const yyyy = kst.getFullYear()
     const mm = String(now.getMonth() + 1).padStart(2, '0')
     const dd = String(now.getDate()).padStart(2, '0')
     const base_date = `${yyyy}${mm}${dd}`
