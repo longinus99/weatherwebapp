@@ -23,7 +23,7 @@
   text-align: center;
 }
 
-.load{
+.load {
   font-size: 16px;
   font-weight: 500;
   padding: 10px;
@@ -34,39 +34,52 @@
 
 /* 등급별 배경색 설정 */
 .좋음 {
-  background-color: #4a90e2; /* 파란색 */
+  background-color: #4a90e2;
+  /* 파란색 */
 }
+
 .보통 {
-  background-color: #7ed321; /* 연두색 */
+  background-color: #7ed321;
+  /* 연두색 */
 }
+
 .나쁨 {
-  background-color: #f5a623; /* 주황색 */
+  background-color: #f5a623;
+  /* 주황색 */
 }
+
 .매우나쁨 {
-  background-color: #d0021b; /* 빨간색 */
+  background-color: #d0021b;
+  /* 빨간색 */
 }
+
 .점검중 {
-  background-color: #4a4a4a; /* 회색 */
+  background-color: #4a4a4a;
+  /* 회색 */
 }
 
 
 /* 꽃가루 지수 (0~3) 전용 스타일 */
 ._0 {
-  background-color: #e0e0e0; /* 낮음 - 연회색 */
+  background-color: #e0e0e0;
+  /* 낮음 - 연회색 */
   color: black;
 }
 
 ._1 {
-  background-color: #ffe599; /* 보통 - 연노랑 */
+  background-color: #ffe599;
+  /* 보통 - 연노랑 */
   color: black;
 }
 
 ._2 {
-  background-color: #f6b26b; /* 높음 - 주황 */
+  background-color: #f6b26b;
+  /* 높음 - 주황 */
   color: black;
 }
 
 ._3 {
-  background-color: #c00000; /* 매우 - 빨강 */
+  background-color: #c00000;
+  /* 매우 - 빨강 */
   color: white;
 }
