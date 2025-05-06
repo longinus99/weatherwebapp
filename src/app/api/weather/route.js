@@ -18,7 +18,7 @@ export async function GET(req) {
 
     const params = new URLSearchParams({
         serviceKey: apiKey,
-        numOfRows: '1000',
+        numOfRows: '20',
         pageNo: '1',
         dataType: 'JSON',
         base_date,
