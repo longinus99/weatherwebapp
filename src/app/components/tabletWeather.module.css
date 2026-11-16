@@ -24,8 +24,6 @@
 .tile { background: #f2f6fa; border-radius: 8px; display: grid; justify-items: center; gap: 3px; min-width: 0; padding: 6px 1px; font-size: clamp(10px, 1.3vw, 16px); }
 .tile small { color: #46617a; font-size: clamp(10px, 1.2vw, 14px); }
 .tile strong { font-size: clamp(17px, 2.4vw, 29px); }
-.rainBar { height: 26px; width: 34%; min-width: 10px; display: flex; align-items: end; background: #e0eaf3; border-radius: 4px; overflow: hidden; }
-.rainBar i { background: #477ec2; width: 100%; }
 .icon { font-size: clamp(19px, 3vw, 38px); line-height: 1.2; }
 .pollen strong { margin-inline-start: 8px; }
 .caption { color: #48627a; display: block; font-size: 11px; margin-top: 8px; }
@@ -49,5 +47,16 @@
   .top time { font-size: 48px; }
   .weather { gap: 8px; }
   .panel, .pollen { padding: 9px 12px; }
-  .rainBar { height: 14px; }
 }
+
+.chartHeading { color: #254967; font-size: 13px; font-weight: 650; }
+.chartHeading span { font-weight: 400; }
+.rainChart { display: block; width: 100%; height: clamp(58px, 9vw, 88px); }
+.chartGrid { stroke: #d9e5ef; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chartLine, .chartDot { stroke: #3978c5; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.chartLine { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.chartDot { fill: white; }
+.hourReading { display: grid; justify-items: center; gap: 2px; min-width: 0; font-size: clamp(10px, 1.25vw, 15px); }
+.hourReading small { color: #46617a; }
+.hourReading span { color: #255f9e; white-space: nowrap; }
+.hourReading strong { font-size: clamp(14px, 1.8vw, 21px); }

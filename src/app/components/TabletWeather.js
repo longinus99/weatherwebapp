@@ -75,6 +75,45 @@ function AirMap({ air, unavailable }) {
   </section>
 }
 
+const todayHours = ['08', '11', '14', '17', '20', '23']
+const rainFormat = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
+
+function TodayForecast({ hours, unavailable }) {
+  const readings = todayHours.map(label => ({
+    ...hours?.find(({ time }) => time.slice(11, 13) === label),
+    label,
+  }))
+  const maxRain = Math.max(1, ...readings.map(({ rain }) => rain ?? 0))
+  const points = readings.map(({ rain }, index) => Number.isFinite(rain)
+    ? { x: 50 + index * 100, y: 74 - 56 * rain / maxRain }
+    : null)
+  const path = points.map((point, index) => point
+    ? (points[index - 1] ? 'L' : 'M') + point.x + ' ' + point.y
+    : '').join(' ')
+
+  return <>
+    <div className={styles.chartHeading}>시간당 강수량 <span>(mm)</span></div>
+    <svg className={styles.rainChart} viewBox="0 0 600 82" preserveAspectRatio="none" role="img"
+      aria-label="08시부터 23시까지 시간대별 강수량 선그래프">
+      {[18, 46, 74].map(y => <line key={y} x1="16" y1={y} x2="584" y2={y} className={styles.chartGrid} />)}
+      <path d={path} className={styles.chartLine} />
+      {points.map((point, index) => point &&
+        <circle key={readings[index].label} cx={point.x} cy={point.y} r="4" className={styles.chartDot}>
+          <title>{readings[index].label}시 · {rainFormat.format(readings[index].rain)} mm</title>
+        </circle>)}
+    </svg>
+    <div className={styles.tiles}>
+      {readings.map(({ label, rain, temperature }) =>
+        <div className={styles.hourReading} key={label}>
+          <small>{label}시</small>
+          <span>{Number.isFinite(rain) ? rainFormat.format(rain) + ' mm' : '–'}</span>
+          <strong>{round(temperature, '°')}</strong>
+        </div>)}
+    </div>
+    {unavailable && <small className={styles.caption}>예보 갱신 실패</small>}
+  </>
+}
+
 export default function TabletWeather({ onSwitch }) {
   const [now, setNow] = useState(null)
   const [region, setRegion] = useState('도봉구')
@@ -113,8 +152,6 @@ export default function TabletWeather({ onSwitch }) {
   }, [])
 
   const data = forecast?.[region]
-  const hours = data?.hours.filter(({ time }) => ['08', '11', '14', '17', '20', '23'].includes(time.slice(11, 13)))
-  const maxRain = Math.max(1, ...(hours ?? []).map(hour => hour.rain ?? 0))
 
   return <main className={styles.screen}>
     <header className={styles.top}>
@@ -130,19 +167,7 @@ export default function TabletWeather({ onSwitch }) {
               <option>도봉구</option><option>서대문구</option>
             </select>
           </div>
-          <div className={styles.tiles}>
-            {(hours?.length ? hours : [8, 11, 14, 17, 20, 23].map(hour => ({ time: '0000-00-00T' + String(hour).padStart(2, '0') }))).map(hour =>
-              <div className={styles.tile} key={hour.time}>
-                <small>{hour.time.slice(11, 13)}시</small>
-                <strong>{round(hour.temperature, '°')}</strong>
-                <div className={styles.rainBar} aria-hidden="true">
-                  <i style={{ height: ((hour.rain ?? 0) / maxRain * 100) + '%' }} />
-                </div>
-                <span>{Number.isFinite(hour.rain) ? hour.rain + ' mm' : '–'}</span>
-                <small>{round(hour.probability, '%')}</small>
-              </div>)}
-          </div>
-          <small className={styles.caption}>{forecastUnavailable ? '예보 갱신 실패' : '기온 · 시간당 강수량 · 강수확률'}</small>
+          <TodayForecast hours={data?.hours} unavailable={forecastUnavailable} />
         </section>
         <section className={styles.panel}>
           <div className={styles.heading}><h2>일주일 날씨</h2></div>
