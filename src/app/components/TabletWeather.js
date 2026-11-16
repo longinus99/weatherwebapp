@@ -29,19 +29,15 @@ async function request(path, signal, asText = false) {
   return asText ? response.text() : response.json()
 }
 
-function AirMap({ air, unavailable }) {
+function AirMap({ air }) {
   const [metric, setMetric] = useState('ultra')
   const limits = metric === 'ultra' ? [15, 35, 75] : [30, 80, 150]
-  const observed = Object.values(air ?? {}).map(row => String(row.observedAt ?? '')).sort().at(-1) ?? ''
-  const timestamp = /^\d{12}$/.test(observed)
-    ? observed.slice(4, 6) + '.' + observed.slice(6, 8) + ' ' + observed.slice(8, 10) + ':' + observed.slice(10, 12)
-    : observed
   const grade = value => {
     const index = limits.findIndex(limit => value <= limit)
     return index === -1 ? 3 : index
   }
 
-  return <section className={styles.panel} aria-label="서울 미세먼지">
+  return <section className={styles.panel + ' ' + styles.airPanel} aria-label="서울 미세먼지">
     <div className={styles.heading}>
       <h2>서울 미세먼지</h2>
       <div className={styles.switch}>
@@ -63,9 +59,19 @@ function AirMap({ air, unavailable }) {
     </svg>
     <div className={styles.legend}>{grades.map((label, i) =>
       <span key={label}><i style={{ background: colors[i] }} />{label}</span>)}</div>
-    <small className={styles.caption}>{unavailable ? '대기질 연결 실패' : timestamp ? timestamp + ' 관측' : '서울시 관측'}</small>
-    <footer className={styles.caption}>예보 Open-Meteo · 대기질 서울시 · 꽃가루 기상청</footer>
   </section>
+}
+
+function AirDetails({ air, unavailable }) {
+  const observed = Object.values(air ?? {}).map(row => String(row.observedAt ?? '')).sort().at(-1) ?? ''
+  const timestamp = /^\d{12}$/.test(observed)
+    ? observed.slice(4, 6) + '.' + observed.slice(6, 8) + ' ' + observed.slice(8, 10) + ':' + observed.slice(10, 12)
+    : observed
+
+  return <footer className={styles.airDetails}>
+    <small className={styles.caption}>{unavailable ? '대기질 연결 실패' : timestamp ? timestamp + ' 관측' : '서울시 관측'}</small>
+    <div className={styles.caption}>예보 Open-Meteo · 대기질 서울시 · 꽃가루 기상청</div>
+  </footer>
 }
 
 const todayHours = ['08', '10', '12', '14', '16', '18', '20', '22', '24']
@@ -176,9 +182,10 @@ export default function TabletWeather({ onSwitch }) {
             })}
           </div>
         </section>
-        <section className={styles.pollen}>서울 꽃가루 위험지수 <strong>{pollen ?? '–'}</strong></section>
       </div>
-      <AirMap air={air} unavailable={airUnavailable} />
+      <section className={styles.pollen}>서울 꽃가루 위험지수 <strong>{pollen ?? '–'}</strong></section>
+      <AirMap air={air} />
+      <AirDetails air={air} unavailable={airUnavailable} />
     </div>
   </main>
 }

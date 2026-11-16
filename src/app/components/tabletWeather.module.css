@@ -58,3 +58,18 @@
 .hourReading small { color: #46617a; }
 .hourReading span { color: #255f9e; white-space: nowrap; }
 .hourReading strong { font-size: clamp(14px, 1.8vw, 21px); }
+
+.airDetails {
+  display: grid;
+  align-content: center;
+  align-self: center;
+  gap: 4px;
+  padding-inline: clamp(10px, 1.45vw, 20px);
+}
+.airDetails .caption { margin: 0; }
+@media (min-width: 680px) {
+  .weather { grid-area: 1 / 1; }
+  .airPanel { grid-area: 1 / 2; }
+  .pollen { grid-area: 2 / 1; align-self: center; }
+  .airDetails { grid-area: 2 / 2; }
+}
