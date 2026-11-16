@@ -96,3 +96,11 @@
   border-color: #80aed7;
 }
 .panel .week .tile:disabled { opacity: .65; }
+
+.screen:fullscreen {
+  margin: 0;
+  overflow: auto;
+}
+.displayControls { display: grid; justify-items: end; gap: 4px; }
+.displayControls > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.displayControls small { color: #48627a; }

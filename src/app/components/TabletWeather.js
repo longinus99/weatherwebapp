@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pollenIssueTime } from '../pollenSeason'
 import districts from './seoulDistricts.json'
 import styles from './tabletWeather.module.css'
@@ -114,6 +114,9 @@ function HourlyForecast({ hours, date, unavailable }) {
 }
 
 export default function TabletWeather({ onSwitch }) {
+  const screenRef = useRef(null)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [fullscreenError, setFullscreenError] = useState(false)
   const [now, setNow] = useState(null)
   const [region, setRegion] = useState('도봉구')
   const [selectedDate, setSelectedDate] = useState(null)
@@ -163,6 +166,30 @@ export default function TabletWeather({ onSwitch }) {
     }
   }, [])
 
+  useEffect(() => {
+    function syncFullscreen() {
+      setFullscreen(document.fullscreenElement === screenRef.current)
+      setFullscreenError(false)
+    }
+    document.addEventListener('fullscreenchange', syncFullscreen)
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen)
+  }, [])
+
+  async function toggleFullscreen() {
+    const screen = screenRef.current
+    if (!screen) return
+    setFullscreenError(false)
+    try {
+      if (document.fullscreenElement === screen) {
+        await document.exitFullscreen()
+      } else {
+        await screen.requestFullscreen()
+      }
+    } catch {
+      setFullscreenError(true)
+    }
+  }
+
   const data = forecast?.[region]
   const firstDate = data?.days[0]?.date
   const activeDate = data?.days.some(day => day.date === selectedDate) ? selectedDate : firstDate
@@ -170,10 +197,16 @@ export default function TabletWeather({ onSwitch }) {
     ? dateFormat.format(new Date(activeDate + 'T12:00:00+09:00')) + ' 날씨'
     : '오늘 날씨'
 
-  return <main className={styles.screen}>
+  return <main ref={screenRef} className={styles.screen}>
     <header className={styles.top}>
       <div><div>{now ? dateFormat.format(now) : '–'}</div><time>{now ? clockFormat.format(now) : '–:–'}</time></div>
-      <button type="button" onClick={onSwitch}>기본 모드</button>
+      <div className={styles.displayControls}>
+        <div>
+          <button type="button" onClick={toggleFullscreen}>{fullscreen ? '전체화면 종료' : '전체화면'}</button>
+          <button type="button" onClick={onSwitch}>기본 모드</button>
+        </div>
+        {fullscreenError && <small role="status">이 브라우저에서 전체화면을 열 수 없어요.</small>}
+      </div>
     </header>
     <div className={styles.columns}>
       <div className={styles.weather}>
