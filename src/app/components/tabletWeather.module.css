@@ -84,3 +84,15 @@
   .pollen { grid-area: 2 / 2; align-self: center; }
   .airDetails { grid-area: 2 / 1; }
 }
+
+.panel .week .tile {
+  background: #f2f6fa;
+  border: 1px solid transparent;
+  padding: 10px 1px;
+  font-size: clamp(10px, 1.3vw, 16px);
+}
+.panel .week .tile[aria-pressed="true"] {
+  background: #e2effb;
+  border-color: #80aed7;
+}
+.panel .week .tile:disabled { opacity: .65; }

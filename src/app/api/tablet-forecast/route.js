@@ -10,7 +10,7 @@ export async function GET() {
     hourly: 'temperature_2m,precipitation_probability',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min',
     timezone: 'Asia/Seoul',
-    forecast_days: '7',
+    forecast_days: '8',
   })
   try {
     const upstream = await fetch('https://api.open-meteo.com/v1/forecast?' + query, {
@@ -26,8 +26,13 @@ export async function GET() {
         hours: hourly.time.map((time, i) => ({
           time, temperature: hourly.temperature_2m[i],
           probability: hourly.precipitation_probability[i],
-        })).filter(({ time }) => time.slice(0, 10) === daily.time[0] || time === daily.time[1] + 'T00:00'),
-        days: daily.time.map((date, i) => ({
+        })).filter(({ time }) => {
+          const hour = Number(time.slice(11, 13))
+          return time.slice(0, 10) === daily.time[7]
+            ? hour === 0
+            : hour === 0 || (hour >= 8 && hour % 2 === 0)
+        }),
+        days: daily.time.slice(0, 7).map((date, i) => ({
           date, code: daily.weather_code[i], high: daily.temperature_2m_max[i], low: daily.temperature_2m_min[i],
         })),
       }]

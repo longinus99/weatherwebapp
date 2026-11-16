@@ -77,14 +77,12 @@ function AirDetails({ air, unavailable }) {
 
 const todayHours = ['08', '10', '12', '14', '16', '18', '20', '22', '24']
 
-function TodayForecast({ hours, unavailable }) {
-  const today = hours?.[0]?.time.slice(0, 10)
-  const readings = todayHours.map(label => ({
-    ...hours?.find(({ time }) => label === '24'
-      ? time.slice(0, 10) !== today && time.slice(11, 16) === '00:00'
-      : time.slice(0, 10) === today && time.slice(11, 16) === label + ':00'),
-    label,
-  }))
+function HourlyForecast({ hours, date, unavailable }) {
+  const nextDate = date ? new Date(Date.parse(date + 'T00:00:00Z') + 86400000).toISOString().slice(0, 10) : null
+  const readings = todayHours.map(label => {
+    const time = label === '24' ? nextDate + 'T00:00' : date + 'T' + label + ':00'
+    return { ...hours?.find(hour => hour.time === time), label }
+  })
   const points = readings.map(({ probability }, index) => Number.isFinite(probability)
     ? { x: 50 + index * 100, y: 74 - 56 * probability / 100 }
     : null)
@@ -118,6 +116,7 @@ function TodayForecast({ hours, unavailable }) {
 export default function TabletWeather({ onSwitch }) {
   const [now, setNow] = useState(null)
   const [region, setRegion] = useState('도봉구')
+  const [selectedDate, setSelectedDate] = useState(null)
   const [forecast, setForecast] = useState(null)
   const [air, setAir] = useState(null)
   const [airUnavailable, setAirUnavailable] = useState(false)
@@ -165,6 +164,11 @@ export default function TabletWeather({ onSwitch }) {
   }, [])
 
   const data = forecast?.[region]
+  const firstDate = data?.days[0]?.date
+  const activeDate = data?.days.some(day => day.date === selectedDate) ? selectedDate : firstDate
+  const title = activeDate && activeDate !== firstDate
+    ? dateFormat.format(new Date(activeDate + 'T12:00:00+09:00')) + ' 날씨'
+    : '오늘 날씨'
 
   return <main className={styles.screen}>
     <header className={styles.top}>
@@ -175,23 +179,25 @@ export default function TabletWeather({ onSwitch }) {
       <div className={styles.weather}>
         <section className={styles.panel}>
           <div className={styles.heading}>
-            <h2>오늘 날씨</h2>
+            <h2 aria-live="polite">{title}</h2>
             <select aria-label="날씨 지역" value={region} onChange={event => setRegion(event.target.value)}>
               <option>도봉구</option><option>서대문구</option>
             </select>
           </div>
-          <TodayForecast hours={data?.hours} unavailable={forecastUnavailable} />
+          <HourlyForecast hours={data?.hours} date={activeDate} unavailable={forecastUnavailable} />
         </section>
         <section className={styles.panel}>
           <div className={styles.heading}><h2>일주일 날씨</h2></div>
           <div className={styles.week}>
             {(data?.days ?? Array.from({ length: 7 }, (_, index) => ({ index }))).map((day, index) => {
               const [icon, condition] = weatherIcon(day.code)
-              return <div className={styles.tile} key={day.date ?? day.index}>
+              return <button type="button" className={styles.tile} key={day.date ?? day.index}
+                disabled={!day.date} aria-pressed={Boolean(day.date && day.date === activeDate)}
+                onClick={() => setSelectedDate(index === 0 ? null : day.date)}>
                 <small>{index === 0 ? '오늘' : day.date ? weekFormat.format(new Date(day.date + 'T12:00:00+09:00')) : '–'}</small>
                 <span className={styles.icon} role="img" aria-label={condition}>{icon}</span>
                 <span><b>{round(day.high, '°')}</b> <small>{round(day.low, '°')}</small></span>
-              </div>
+              </button>
             })}
           </div>
         </section>
