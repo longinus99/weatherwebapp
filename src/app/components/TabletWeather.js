@@ -31,10 +31,8 @@ async function request(path, signal, asText = false) {
 
 function AirMap({ air, unavailable }) {
   const [metric, setMetric] = useState('ultra')
-  const [selected, setSelected] = useState('도봉구')
   const limits = metric === 'ultra' ? [15, 35, 75] : [30, 80, 150]
-  const current = air?.[selected]
-  const observed = String(current?.observedAt ?? '')
+  const observed = Object.values(air ?? {}).map(row => String(row.observedAt ?? '')).sort().at(-1) ?? ''
   const timestamp = /^\d{12}$/.test(observed)
     ? observed.slice(4, 6) + '.' + observed.slice(6, 8) + ' ' + observed.slice(8, 10) + ':' + observed.slice(10, 12)
     : observed
@@ -54,10 +52,10 @@ function AirMap({ air, unavailable }) {
     <svg className={styles.map} viewBox="0 0 464 386" aria-label="서울 25개 자치구 대기질 지도">
       {districts.map(({ name, x, y, d }) => {
         const value = air?.[name]?.[metric]
-        return <g key={name} onClick={() => setSelected(name)}>
+        return <g key={name}>
           <title>{name} {value == null ? '관측값 없음' : value + ' µg/m³'}</title>
           <path d={d} fill={value == null ? '#dfe8ee' : colors[grade(value)]}
-            stroke={selected === name ? '#173957' : '#ffffff'} strokeWidth={selected === name ? 2 : 1} />
+            stroke="#ffffff" strokeWidth={1} />
           <text x={x} y={y} textAnchor="middle">{name.replace(/구$/, '')}</text>
           <text x={x} y={y + 11} textAnchor="middle">{value ?? '–'}</text>
         </g>
@@ -65,48 +63,44 @@ function AirMap({ air, unavailable }) {
     </svg>
     <div className={styles.legend}>{grades.map((label, i) =>
       <span key={label}><i style={{ background: colors[i] }} />{label}</span>)}</div>
-    <div className={styles.mapDetails}>
-      <select aria-label="대기질 자치구" value={selected} onChange={event => setSelected(event.target.value)}>
-        {districts.map(({ name }) => <option key={name}>{name}</option>)}
-      </select>
-      <span aria-live="polite">{current?.[metric] == null ? '–' : current[metric] + ' µg/m³ · ' + grades[grade(current[metric])]}</span>
-      <small>{unavailable ? '대기질 연결 실패' : timestamp ? timestamp + ' 관측' : '서울시 관측'}</small>
-    </div>
+    <small className={styles.caption}>{unavailable ? '대기질 연결 실패' : timestamp ? timestamp + ' 관측' : '서울시 관측'}</small>
+    <footer className={styles.caption}>예보 Open-Meteo · 대기질 서울시 · 꽃가루 기상청</footer>
   </section>
 }
 
-const todayHours = ['08', '11', '14', '17', '20', '23']
-const rainFormat = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
+const todayHours = ['08', '10', '12', '14', '16', '18', '20', '22', '24']
 
 function TodayForecast({ hours, unavailable }) {
+  const today = hours?.[0]?.time.slice(0, 10)
   const readings = todayHours.map(label => ({
-    ...hours?.find(({ time }) => time.slice(11, 13) === label),
+    ...hours?.find(({ time }) => label === '24'
+      ? time.slice(0, 10) !== today && time.slice(11, 16) === '00:00'
+      : time.slice(0, 10) === today && time.slice(11, 16) === label + ':00'),
     label,
   }))
-  const maxRain = Math.max(1, ...readings.map(({ rain }) => rain ?? 0))
-  const points = readings.map(({ rain }, index) => Number.isFinite(rain)
-    ? { x: 50 + index * 100, y: 74 - 56 * rain / maxRain }
+  const points = readings.map(({ probability }, index) => Number.isFinite(probability)
+    ? { x: 50 + index * 100, y: 74 - 56 * probability / 100 }
     : null)
   const path = points.map((point, index) => point
     ? (points[index - 1] ? 'L' : 'M') + point.x + ' ' + point.y
     : '').join(' ')
 
   return <>
-    <div className={styles.chartHeading}>시간당 강수량 <span>(mm)</span></div>
-    <svg className={styles.rainChart} viewBox="0 0 600 82" preserveAspectRatio="none" role="img"
-      aria-label="08시부터 23시까지 시간대별 강수량 선그래프">
-      {[18, 46, 74].map(y => <line key={y} x1="16" y1={y} x2="584" y2={y} className={styles.chartGrid} />)}
+    <div className={styles.chartHeading}>강수확률 <span>(%)</span></div>
+    <svg className={styles.rainChart} viewBox="0 0 900 82" preserveAspectRatio="none" role="img"
+      aria-label="08시부터 24시까지 2시간 간격 강수확률 선그래프">
+      {[18, 46, 74].map(y => <line key={y} x1="16" y1={y} x2="884" y2={y} className={styles.chartGrid} />)}
       <path d={path} className={styles.chartLine} />
       {points.map((point, index) => point &&
-        <circle key={readings[index].label} cx={point.x} cy={point.y} r="4" className={styles.chartDot}>
-          <title>{readings[index].label}시 · {rainFormat.format(readings[index].rain)} mm</title>
+        <circle key={readings[index].label} cx={point.x} cy={point.y} r="5" className={styles.chartDot}>
+          <title>{readings[index].label}시 · {round(readings[index].probability, '%')}</title>
         </circle>)}
     </svg>
     <div className={styles.tiles}>
-      {readings.map(({ label, rain, temperature }) =>
+      {readings.map(({ label, probability, temperature }) =>
         <div className={styles.hourReading} key={label}>
           <small>{label}시</small>
-          <span>{Number.isFinite(rain) ? rainFormat.format(rain) + ' mm' : '–'}</span>
+          <span>{round(probability, '%')}</span>
           <strong>{round(temperature, '°')}</strong>
         </div>)}
     </div>
@@ -186,6 +180,5 @@ export default function TabletWeather({ onSwitch }) {
       </div>
       <AirMap air={air} unavailable={airUnavailable} />
     </div>
-    <footer className={styles.caption}>예보 Open-Meteo · 대기질 서울시 · 꽃가루 기상청</footer>
   </main>
 }

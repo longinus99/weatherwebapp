@@ -7,7 +7,7 @@ export async function GET() {
   const query = new URLSearchParams({
     latitude: locations.map(location => location.latitude).join(','),
     longitude: locations.map(location => location.longitude).join(','),
-    hourly: 'temperature_2m,precipitation,precipitation_probability',
+    hourly: 'temperature_2m,precipitation_probability',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min',
     timezone: 'Asia/Seoul',
     forecast_days: '7',
@@ -25,8 +25,8 @@ export async function GET() {
       return [name, {
         hours: hourly.time.map((time, i) => ({
           time, temperature: hourly.temperature_2m[i],
-          rain: hourly.precipitation[i], probability: hourly.precipitation_probability[i],
-        })).filter(({ time }) => time.slice(0, 10) === daily.time[0]),
+          probability: hourly.precipitation_probability[i],
+        })).filter(({ time }) => time.slice(0, 10) === daily.time[0] || time === daily.time[1] + 'T00:00'),
         days: daily.time.map((date, i) => ({
           date, code: daily.weather_code[i], high: daily.temperature_2m_max[i], low: daily.temperature_2m_min[i],
         })),
