@@ -1,4 +1,5 @@
 export const metadata = {
+  manifest: '/weather.webmanifest',
   title: '모바일 날씨 앱',
   description: 'Next.js로 만든 모바일 웹 날씨 앱',
 }
