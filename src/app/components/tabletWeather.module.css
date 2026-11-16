@@ -69,7 +69,18 @@
 .airDetails .caption { margin: 0; }
 @media (min-width: 680px) {
   .weather { grid-area: 1 / 1; }
-  .airPanel { grid-area: 1 / 2; }
+  .airPanel {
+    grid-area: 1 / 2;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+  }
+  .airPanel .map {
+    height: min(50vh, 430px);
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
+  }
   .pollen { grid-area: 2 / 2; align-self: center; }
   .airDetails { grid-area: 2 / 1; }
 }
