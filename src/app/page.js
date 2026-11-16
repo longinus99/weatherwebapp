@@ -1,9 +1,34 @@
 'use client'
 import { useEffect, useState } from 'react'
 import styles from './page.module.css'
+import TabletWeather from './components/TabletWeather'
 import WeatherCard from './components/WeatherCard'
 
 export default function Home() {
+  const [tablet, setTablet] = useState(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('weather-mode')
+    setTablet(saved ? saved === 'tablet' : matchMedia('(orientation: landscape) and (min-width: 760px)').matches)
+  }, [])
+
+  function switchMode() {
+    localStorage.setItem('weather-mode', tablet ? 'standard' : 'tablet')
+    setTablet(!tablet)
+  }
+
+  if (tablet === null) return null
+  if (tablet) return <TabletWeather onSwitch={switchMode} />
+
+  return <>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 12px' }}>
+      <button type="button" onClick={switchMode}>탭 모드</button>
+    </div>
+    <StandardWeather />
+  </>
+}
+
+function StandardWeather() {
   const [dustData, setDustData] = useState({})
   const [forecastData, setForecastData] = useState({})
   const [pollenData, setPollenData] = useState(null)
