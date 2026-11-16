@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import styles from './page.module.css'
 import TabletWeather from './components/TabletWeather'
+import { pollenIssueTime } from './pollenSeason'
 import WeatherCard from './components/WeatherCard'
 
 export default function Home() {
@@ -57,6 +58,7 @@ function StandardWeather() {
     }
 
     const fetchPollen = async () => {
+      if (!pollenIssueTime()) return setPollenData({ index: '' })
       const res = await fetch('/api/pollen')
       const text = await res.text()
       const xml = new DOMParser().parseFromString(text, 'text/xml')
@@ -84,11 +86,10 @@ function StandardWeather() {
       setDustData(Object.fromEntries(dustEntries))
       setForecastData(Object.fromEntries(forecastEntries))
     
-      // 꽃가루 API는 하나니까 그냥 호출
-      await fetchPollen()
     }
 
     load()
+    fetchPollen().catch(() => setPollenData({ index: '' }))
   }, [])
 
   // 지역별 미세먼지와 기상정보 보여줌
@@ -112,7 +113,7 @@ function StandardWeather() {
             🌼 꽃가루 지수: {pollenData.index}
           </p>
         ) : (
-          <p className={styles.load}>불러오는 중...</p>
+          <p className={styles.load}>{pollenData ? '–' : '불러오는 중...'}</p>
         )}
       </div>
     </div>

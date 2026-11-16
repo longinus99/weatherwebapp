@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { pollenIssueTime } from '../pollenSeason'
 import districts from './seoulDistricts.json'
 import styles from './tabletWeather.module.css'
 
@@ -126,6 +127,7 @@ export default function TabletWeather({ onSwitch }) {
   useEffect(() => {
     const controller = new AbortController()
     const signal = controller.signal
+    let loadedPollenIssue = null
     function updateClock() { setNow(new Date()) }
     function refresh() {
       request('/api/tablet-forecast', signal).then(data => {
@@ -134,10 +136,21 @@ export default function TabletWeather({ onSwitch }) {
       request('/api/seoul-air', signal).then(data => {
         if (!signal.aborted) { setAir(data); setAirUnavailable(false) }
       }).catch(() => { if (!signal.aborted) setAirUnavailable(true) })
+      const issue = pollenIssueTime()
+      if (!issue) {
+        loadedPollenIssue = null
+        setPollen(null)
+        return
+      }
+      if (issue === loadedPollenIssue) return
+
       request('/api/pollen', signal, true).then(xml => {
         const item = new DOMParser().parseFromString(xml, 'application/xml').querySelector('item')
         const value = item?.querySelector('today')?.textContent?.trim()
-        if (!signal.aborted) setPollen(pollenGrades[value] ?? null)
+        if (signal.aborted) return
+        const grade = pollenGrades[value] ?? null
+        if (grade) loadedPollenIssue = issue
+        setPollen(grade)
       }).catch(() => { if (!signal.aborted) setPollen(null) })
     }
     updateClock()
@@ -183,9 +196,9 @@ export default function TabletWeather({ onSwitch }) {
           </div>
         </section>
       </div>
-      <section className={styles.pollen}>서울 꽃가루 위험지수 <strong>{pollen ?? '–'}</strong></section>
-      <AirMap air={air} />
       <AirDetails air={air} unavailable={airUnavailable} />
+      <AirMap air={air} />
+      <section className={styles.pollen}>서울 꽃가루 위험지수 <strong>{pollen ?? '–'}</strong></section>
     </div>
   </main>
 }
