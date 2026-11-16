@@ -14,12 +14,18 @@ export async function GET() {
     if (!upstream.ok) throw new Error()
     const data = await upstream.json()
     const rows = data.RealtimeCityAir?.row
-    if (!Array.isArray(rows) || !rows.length) throw new Error()
-    const districts = Object.fromEntries(rows.map(row => [row.MSRSTE_NM, {
-      fine: concentration(row.PM10),
-      ultra: concentration(row.PM25),
-      observedAt: row.MSRDT,
-    }]))
+    if (!Array.isArray(rows)) throw new Error()
+    const districts = {}
+    for (const row of rows) {
+      const name = row.MSRSTN_NM ?? row.MSRSTE_NM
+      if (typeof name !== 'string' || !name.trim()) continue
+      districts[name.trim()] = {
+        fine: concentration(row.PM ?? row.PM10),
+        ultra: concentration(row.FPM ?? row.PM25),
+        observedAt: row.MSRMT_DT ?? row.MSRDT,
+      }
+    }
+    if (Object.keys(districts).length === 0) throw new Error()
     return Response.json(districts, {
       headers: { 'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=300' },
     })
