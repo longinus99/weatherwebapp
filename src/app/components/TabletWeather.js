@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { seoulDate } from '../seoulDate'
 import { pollenIssueTime } from '../pollenSeason'
 import districts from './seoulDistricts.json'
 import styles from './tabletWeather.module.css'
@@ -25,7 +26,7 @@ function weatherIcon(code) {
 const round = (value, suffix) => Number.isFinite(value) ? Math.round(value) + suffix : '–'
 
 async function request(path, signal, asText = false) {
-  const response = await fetch(path, { signal })
+  const response = await fetch(path, { signal, cache: 'no-store' })
   if (!response.ok) throw new Error('Request failed')
   return asText ? response.text() : response.json()
 }
@@ -127,18 +128,25 @@ export default function TabletWeather({ onSwitch }) {
   const [pollen, setPollen] = useState(null)
 
   useEffect(() => {
-    const controller = new AbortController()
-    const signal = controller.signal
+    let controller
     let loadedPollenIssue = null
-    function updateClock() { setNow(new Date()) }
-    function refresh() {
+    let lastRefresh = -Infinity
+    let lastDate
+
+    function refresh(current, date) {
+      if (lastDate && lastDate !== date) setSelectedDate(null)
+      lastDate = date
+      lastRefresh = current.getTime()
+      controller?.abort()
+      controller = new AbortController()
+      const signal = controller.signal
       request('/api/tablet-forecast', signal).then(data => {
         if (!signal.aborted) { setForecast(data); setForecastUnavailable(false) }
       }).catch(() => { if (!signal.aborted) setForecastUnavailable(true) })
       request('/api/seoul-air', signal).then(data => {
         if (!signal.aborted) { setAir(data); setAirUnavailable(false) }
       }).catch(() => { if (!signal.aborted) setAirUnavailable(true) })
-      const issue = pollenIssueTime()
+      const issue = pollenIssueTime(current)
       if (!issue) {
         loadedPollenIssue = null
         setPollen(null)
@@ -155,14 +163,31 @@ export default function TabletWeather({ onSwitch }) {
         setPollen(grade)
       }).catch(() => { if (!signal.aborted) setPollen(null) })
     }
-    updateClock()
-    refresh()
-    const clock = setInterval(updateClock, 1000)
-    const refreshTimer = setInterval(refresh, 600000)
+    function update(force = false) {
+      if (document.visibilityState === 'hidden') return
+      const current = new Date()
+      const date = seoulDate(current)
+      const elapsed = current.getTime() - lastRefresh
+      setNow(current)
+      if (date !== lastDate || elapsed >= 600000 || (force && elapsed >= 5000)) {
+        refresh(current, date)
+      }
+    }
+
+    const resume = () => update(true)
+    update()
+    const clock = setInterval(update, 1000)
+    document.addEventListener('visibilitychange', resume)
+    window.addEventListener('pageshow', resume)
+    window.addEventListener('focus', resume)
+    window.addEventListener('online', resume)
     return () => {
-      controller.abort()
+      controller?.abort()
       clearInterval(clock)
-      clearInterval(refreshTimer)
+      document.removeEventListener('visibilitychange', resume)
+      window.removeEventListener('pageshow', resume)
+      window.removeEventListener('focus', resume)
+      window.removeEventListener('online', resume)
     }
   }, [])
 
@@ -190,7 +215,8 @@ export default function TabletWeather({ onSwitch }) {
     }
   }
 
-  const data = forecast?.[region]
+  const regionForecast = forecast?.[region]
+  const data = now && regionForecast?.days[0]?.date === seoulDate(now) ? regionForecast : null
   const firstDate = data?.days[0]?.date
   const activeDate = data?.days.some(day => day.date === selectedDate) ? selectedDate : firstDate
   const title = activeDate && activeDate !== firstDate

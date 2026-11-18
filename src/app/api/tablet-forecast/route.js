@@ -1,16 +1,21 @@
+import { seoulDate } from '../../seoulDate'
+
 const locations = [
   { name: '도봉구', latitude: 37.6688, longitude: 127.0472 },
   { name: '서대문구', latitude: 37.5791, longitude: 126.9368 },
 ]
 
 export async function GET() {
+  const now = new Date()
+  const today = seoulDate(now)
   const query = new URLSearchParams({
     latitude: locations.map(location => location.latitude).join(','),
     longitude: locations.map(location => location.longitude).join(','),
     hourly: 'temperature_2m,precipitation_probability',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min',
     timezone: 'Asia/Seoul',
-    forecast_days: '8',
+    start_date: today,
+    end_date: seoulDate(now, 7),
   })
   try {
     const upstream = await fetch('https://api.open-meteo.com/v1/forecast?' + query, {
@@ -22,6 +27,7 @@ export async function GET() {
     if (!Array.isArray(data) || data.length !== locations.length) throw new Error()
     const forecast = Object.fromEntries(locations.map(({ name }, index) => {
       const { hourly, daily } = data[index]
+      if (daily.time[0] !== today) throw new Error()
       return [name, {
         hours: hourly.time.map((time, i) => ({
           time, temperature: hourly.temperature_2m[i],
@@ -38,7 +44,7 @@ export async function GET() {
       }]
     }))
     return Response.json(forecast, {
-      headers: { 'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=300' },
+      headers: { 'Cache-Control': 'no-store' },
     })
   } catch {
     return Response.json({ error: '예보를 불러오지 못했습니다.' }, { status: 502 })
